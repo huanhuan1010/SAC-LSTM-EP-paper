@@ -1,0 +1,41 @@
+protocol_status: frozen_formal
+development_only: false
+base_config: paper_main_task_offloading_v1.yaml
+run_name: paper-main-core-formal-v1
+smoke_prerequisite: ../results/prediction_study/1ab64f30becd/paper-main-core-smoke-v1/study_result.json
+
+training_seeds: [860000, 870000, 880000, 890000, 900000]
+training_episodes: 2000
+evaluation_seeds: [920000, 921000, 922000, 923000, 924000]
+evaluation_episodes: 100
+minimum_training_seeds: 5
+
+algorithms:
+  - SAC-LSTM-EP-PaperMain
+  - SAC-LSTM-EP-NoPrediction
+  - SAC-LSTM-EP-FixedSOC
+  - SAC
+  - C-SAC-Alvi-Adapted
+  - DDPG
+
+planned_contrasts:
+  - id: prediction_contribution
+    treatment: SAC-LSTM-EP-PaperMain
+    control: SAC-LSTM-EP-NoPrediction
+    purpose: Isolate the contribution of future energy-margin prediction.
+  - id: predictive_margin_vs_fixed_soc
+    treatment: SAC-LSTM-EP-PaperMain
+    control: SAC-LSTM-EP-FixedSOC
+    purpose: Compare predictive energy margin with a fixed SOC trigger.
+  - id: full_vs_sac
+    treatment: SAC-LSTM-EP-PaperMain
+    control: SAC
+    purpose: Compare the complete prediction-driven method with base SAC.
+  - id: full_vs_csac_alvi_adapted
+    treatment: SAC-LSTM-EP-PaperMain
+    control: C-SAC-Alvi-Adapted
+    purpose: Compare with the adapted constrained-SAC literature baseline.
+  - id: full_vs_ddpg
+    treatment: SAC-LSTM-EP-PaperMain
+    control: DDPG
+    purpose: Compare with the primary UAV-MEC DDPG domain baseline.

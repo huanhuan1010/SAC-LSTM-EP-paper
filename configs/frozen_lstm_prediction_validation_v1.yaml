@@ -1,0 +1,12 @@
+protocol_status: frozen_secondary_analysis
+development_only: false
+
+formal_result_file: ../results/formal_paper_main/1ab64f30becd/paper-main-core-formal-v1/formal_result.json
+comparison_result_file: ../results/experiments/1ab64f30becd/paper-main-core-formal-v1/eval_results.json
+output_root: ../results/lstm_validation/1ab64f30becd/paper-main-frozen-lstm-validation-v1
+
+algorithm: SAC-LSTM-EP-PaperMain
+training_seeds: [860000, 870000, 880000, 890000, 900000]
+horizons: [1, 3, 5]
+rolling_window: 10
+minimum_seed_wins: 3

@@ -1,0 +1,166 @@
+# Frozen-policy robustness extension for the completed paper-main comparison.
+# This protocol loads the five formal checkpoints for Full and NoPrediction;
+# it performs no training, model selection, threshold tuning, or LSTM update.
+protocol_status: frozen_prediction_robustness_extension
+development_only: false
+require_frozen_plan: true
+
+comparison_file: results/experiments/1ab64f30becd/paper-main-core-formal-v1/eval_results.json
+output_root: results/scenario_sweep/paper-main-prediction-stress-v1
+evaluation_seed: 940000
+evaluation_episodes: 100
+
+# Bind evaluation to the exact completed formal comparison and its five
+# checkpoint pairs.  This also provides a narrow, auditable source-fingerprint
+# waiver if the evaluation-only config/test package changes the local tree.
+comparison_handoff:
+  result_file: results/formal_paper_main/1ab64f30becd/paper-main-core-formal-v1/formal_result.json
+  required_status: complete
+  required_formal_claims_authorized: false
+
+algorithms:
+- SAC-LSTM-EP-PaperMain
+- SAC-LSTM-EP-NoPrediction
+
+contrasts:
+- id: prediction_contribution_under_stress
+  treatment: SAC-LSTM-EP-PaperMain
+  control: SAC-LSTM-EP-NoPrediction
+
+# Every learned/control choice remains frozen.  Scenario overrides are limited
+# to exogenous initial energy, task arrivals and physical energy uncertainty.
+locked_control_keys:
+- policy_action_mode
+- safety_projection_policy
+- safety_min_energy_saving
+- threshold_yellow
+- threshold_orange
+- threshold_red
+- predictive_return_threshold
+- single_level_margin_threshold
+- yellow_lambda_max
+- yellow_speed_min
+- yellow_speed_max
+- yellow_cpu_max
+- yellow_p_tx_max
+- yellow_pause_noncore_uav
+- orange_lambda_max
+- orange_speed_min
+- orange_speed_max
+- orange_cpu_max
+- orange_p_tx_max
+- orange_pause_noncore_uav
+- red_lambda_max
+- red_speed_min
+- red_speed_max
+- red_cpu_max
+- red_p_tx_max
+- red_pause_noncore_uav
+- cmdp_enabled
+- cmdp_cost_mode
+- cmdp_margin_target
+- cmdp_cost_scale
+- cmdp_cost_limit
+- lagrange_lr
+- reward_energy_weight
+- reward_delay_weight
+- reward_user_energy_weight
+- lookback
+- horizon
+- lstm_hidden_dim
+- lstm_num_layers
+- lstm_update_interval
+- residual_correction_enabled
+- residual_ema_alpha
+- residual_clip_ratio
+- prediction_uncertainty_gain
+- safety_reserve_ratio
+
+# Outcomes are registered before execution.  The paired contrast is
+# treatment-minus-control on the same five training seeds and episode seeds.
+acceptance_criteria:
+  primary_metrics:
+    mission_success_rate: higher_is_better
+    short_horizon_energy_infeasible_rate: lower_is_better
+    task_completion_rate: higher_is_better
+  secondary_metrics:
+    physical_constraint_violation_rate: lower_is_better
+    safe_return_rate: higher_is_better
+    system_energy: lower_is_better_conditional_on_service
+    mean_task_delay_s: lower_is_better
+  interpretation: >-
+    Report all scenarios, all five paired checkpoint seeds, and all registered
+    outcomes. The nominal anchor is a reproducibility check. Evidence for the
+    prediction mechanism is strongest if Full improves joint success and/or
+    energy feasibility under low SOC, higher task load, or stronger energy
+    uncertainty without a material loss in task completion. No scenario may be
+    selected post hoc as the sole reported result.
+
+scenarios:
+  nominal:
+    protocol_role: reproducibility_anchor
+    description: Re-evaluation under the unchanged formal training environment.
+    overrides: {}
+
+  soc_30:
+    protocol_role: single_factor_initial_soc
+    description: Fixed 30% initial SOC severe energy boundary.
+    overrides:
+      initial_energy_min: 0.30
+      initial_energy_max: 0.30
+
+  soc_50:
+    protocol_role: single_factor_initial_soc
+    description: Fixed 50% initial SOC medium-low energy condition.
+    overrides:
+      initial_energy_min: 0.50
+      initial_energy_max: 0.50
+
+  soc_70:
+    protocol_role: single_factor_initial_soc
+    description: Fixed 70% initial SOC in-distribution condition.
+    overrides:
+      initial_energy_min: 0.70
+      initial_energy_max: 0.70
+
+  soc_90:
+    protocol_role: single_factor_initial_soc
+    description: Fixed 90% initial SOC high-energy condition.
+    overrides:
+      initial_energy_min: 0.90
+      initial_energy_max: 0.90
+
+  load_medium:
+    protocol_role: single_factor_task_load
+    description: Medium task load with an arrival interval of 12 steps.
+    overrides:
+      task_interval: 12
+
+  load_high:
+    protocol_role: single_factor_task_load
+    description: High task load with an arrival interval of 10 steps.
+    overrides:
+      task_interval: 10
+
+  uncertainty_high:
+    protocol_role: single_factor_energy_uncertainty
+    description: Stronger bounded battery-side energy-model mismatch.
+    overrides:
+      energy_uncertainty_enabled: true
+      energy_uncertainty_log_std: 0.15
+      energy_uncertainty_min_scale: 0.65
+      energy_uncertainty_max_scale: 1.50
+
+  compound_stress:
+    protocol_role: combined_energy_service_boundary
+    description: >-
+      Predeclared 30% SOC, high task load and strong energy uncertainty with
+      every policy, predictor and safety setting held fixed.
+    overrides:
+      initial_energy_min: 0.30
+      initial_energy_max: 0.30
+      task_interval: 10
+      energy_uncertainty_enabled: true
+      energy_uncertainty_log_std: 0.15
+      energy_uncertainty_min_scale: 0.65
+      energy_uncertainty_max_scale: 1.50
