@@ -1,0 +1,8 @@
+# 仅用于端到端流水线测试，不用于论文实验。
+num_users: 1
+max_steps: 2
+task_interval: 1000
+buffer_capacity: 64
+batch_size: 8
+warmup_steps: 100
+max_episodes: 1
